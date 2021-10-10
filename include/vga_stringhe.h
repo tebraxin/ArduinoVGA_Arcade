@@ -5,6 +5,7 @@ static const char ArduinoConsoleGame[] PROGMEM = "ARDUINO CONSOLE GAME";
 static const char byTebraxin[] PROGMEM = "by tebraxin 2021";
 static const char premiOKcontinuare[] PROGMEM = "OK per continuare";
 static const char premiSXcopyright[] PROGMEM = "SX per Copyright";
+static const char premiDXcolore[] PROGMEM = "DX per cambio colore";
 
 static const char menuSelezioneGioco[] PROGMEM = ">> SELEZIONE GIOCO <<";
 static const char giocoSelezionato[] PROGMEM = "Gioco selezionato : ";

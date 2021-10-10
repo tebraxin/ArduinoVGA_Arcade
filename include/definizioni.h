@@ -10,11 +10,28 @@
 #define BARRA_Y (VGAX_HEIGHT - 3) // pixel dal fondo per altezza barra
 
 // costanti per i 4 colori della libreira
-// solo due bit per colore 00-nero, 01-rosso, 10-verde, 11-giallo
-#define NERO 0				  // codice per colore nero
-#define ROSSO 1				  // codice per colore rosso
-#define VERDE 2				  // codice per colore verde
-#define GIALLO 3			  // codice per colore giallo
+// solo due bit per colore - primo set combinazioni
+#define NERO 0	 // codice per colore nero
+#define ROSSO 1	 // codice per colore rosso
+#define VERDE 2	 // codice per colore verde
+#define GIALLO 3 // codice per colore giallo
+
+// set 1 colori - nero, rosso, verde, giallo - default alla accensione
+// set 2 colori - nero, rosso, blu, viola
+// set 3 colori - nero, verde, blu, azzurro
+// set 4 colori - nero, rosso, azzurro, bianco
+// set 5 colori - nero, giallo, blu, bianco
+
+byte indiceSetcolori = 0; // se colori iniziale, può poi variare da 0 a 4, cioè la riga della matrice
+
+byte matriceColori[5][4] = {
+	{1, 0, 1, 0},
+	{1, 0, 0, 1},
+	{0, 1, 1, 0},
+	{1, 0, 1, 1},
+	{1, 1, 0, 1},
+};
+
 #define BARRA_L 5			  // lunghezza pixel barra
 #define ALIENI_RIGHE 3		  // numero di righe di alieni
 #define ALIENI_COLONNE 8	  // numero di alieni su una riga (colonne)
@@ -28,8 +45,6 @@
 #define STEP_MENU 6		 // numero di pixel tra una riga e la successiva
 
 // Definizione di variabili globali di programma
-int pxx, pyy = 1;
-// int posPotX = 0; // posizione X della barra letta dal potenziometro
 static char scrollX = -VGAX_WIDTH;
 int statoMenu = 00;	 // variabile che indicato il livello / stato del menù, 00 è il livello iniziale
 int rigaStringa = 0; // variabile per disegno righe nei menù
@@ -49,7 +64,6 @@ La	220	440	880	1760
 La#	233	466	932	1865
 Si	247	494	988	1976
 */
-
 #define NOTA_GAMEOVER 131	  // DO
 #define NOTA_SPARO_ALIENO 165 // MI
 #define NOTA_SPARO_IO 196	  // SOL

@@ -14,7 +14,6 @@
 // solo due bit per colore 00-nero, 01-rosso, 10-verde, 11-giallo
 #include <VGAX.h>
 VGAX vga;
-// static const char str_SpaceInvaders[] PROGMEM = "SpaceInvaders";
 
 // Iclusione file con il font dalla libreria
 #include "vga_font.h"
@@ -25,27 +24,35 @@ VGAX vga;
 #include "F_disegnaBordi.h"
 #include "F_muoviPotBarra.h"
 #include "F_disegnaAlieni.h"
-// #include "F_GameSpaceInvaders.h"
 #include "F_GameSpaceInvaders2.h"
 #include "F_GamePong.h"
 #include "F_GameSnake.h"
 #include "F_scriviPunteggio.h"
+#include "F_impostaColori.h"
 
 void setup()
 {
-    // Serial.begin(9600);
-    // led su scheda sviluppo
-    pinMode(PIN_LED, OUTPUT);
-    digitalWrite(2, LOW);
-    // ingresso pulsante su scheda viluppo
-    pinMode(PIN_PULS, INPUT_PULLUP);
-    // ingresso pulsante di sparo
-    pinMode(PIN_SW, INPUT);
+    // led segnalazione
+    pinMode(PIN_LED_ROSSO, OUTPUT);
+    digitalWrite(PIN_LED_ROSSO, HIGH);
+    pinMode(PIN_LED_VERDE, OUTPUT);
+    digitalWrite(PIN_LED_VERDE, LOW);
+
     // ingressi pulsanti di comando sx, dx, ok
     pinMode(PIN_OK, INPUT);
     pinMode(PIN_SX, INPUT);
     pinMode(PIN_DX, INPUT);
 
+    // uscite relè scambio colori
+    pinMode(A2, OUTPUT);
+    pinMode(A3, OUTPUT);
+    pinMode(A4, OUTPUT);
+    pinMode(A5, OUTPUT);
+    digitalWrite(A2, HIGH);
+    digitalWrite(A3, HIGH);
+    digitalWrite(A4, HIGH);
+    digitalWrite(A5, HIGH);
+    impostaColori(indiceSetcolori);
     vga.begin();
     vga.clear(NERO);
     disegnaBordi(ROSSO);
@@ -54,7 +61,7 @@ void setup()
     unsigned long int t = 0;
     do
     {
-        if ((vga.millis() - t) > 50) // millisecondi di ritardo - non bloccante
+        if ((vga.millis() - t) > 100) // millisecondi di ritardo - non bloccante
         {
             vga.clear(NERO);
             disegnaBordi(ROSSO);
@@ -62,23 +69,24 @@ void setup()
             vga.printPROGMEM((byte *)fnt_nanofont_data, FNT_NANOFONT_SYMBOLS_COUNT, FNT_NANOFONT_HEIGHT, 3, 1, byTebraxin, scrollX, 40, GIALLO);
             scrollX++;
             t = vga.millis(); // 20 millisecondi di ritardo - non bloccante
-            // vga.tone(random(150, 300));
         }
         if (scrollX == VGAX_WIDTH)
             scrollX = -VGAX_WIDTH / 2;
     } while ((digitalRead(PIN_SX) == 0) && (digitalRead(PIN_DX) == 0) && (digitalRead(PIN_OK) == 0)); // se premo uno dei tre tasti esco dal setup
     vga.clear(NERO);
     disegnaBordi(ROSSO);
-    // vga.noTone();
 }
 
 void menu_00_principale() // Inizio funzione per richiamo menù principale
 {
     vga.delay(RITARDO_SCHERMATA);
+    digitalWrite(PIN_LED_VERDE, HIGH);
     unsigned long int t_ok = 0;
     unsigned long int t_sx = 0;
+    unsigned long int t_dx = 0;
     bool puls_ok = false;
     bool puls_sx = false;
+    bool puls_dx = false;
     rigaStringa = 0;
     vga.clear(NERO);
     disegnaBordi(ROSSO);
@@ -86,6 +94,7 @@ void menu_00_principale() // Inizio funzione per richiamo menù principale
     vga.printPROGMEM((byte *)fnt_nanofont_data, FNT_NANOFONT_SYMBOLS_COUNT, FNT_NANOFONT_HEIGHT, 3, 1, byTebraxin, INIZIO_SX_MENU, rigaStringa += STEP_MENU, GIALLO);
     vga.printPROGMEM((byte *)fnt_nanofont_data, FNT_NANOFONT_SYMBOLS_COUNT, FNT_NANOFONT_HEIGHT, 3, 1, premiOKcontinuare, INIZIO_SX_MENU, rigaStringa += STEP_MENU, VERDE);
     vga.printPROGMEM((byte *)fnt_nanofont_data, FNT_NANOFONT_SYMBOLS_COUNT, FNT_NANOFONT_HEIGHT, 3, 1, premiSXcopyright, INIZIO_SX_MENU, rigaStringa += STEP_MENU, GIALLO);
+    vga.printPROGMEM((byte *)fnt_nanofont_data, FNT_NANOFONT_SYMBOLS_COUNT, FNT_NANOFONT_HEIGHT, 3, 1, premiDXcolore, INIZIO_SX_MENU, rigaStringa += STEP_MENU, GIALLO);
     do
     {
         puls_ok = digitalRead(PIN_OK); // debounce software pulsante OK
@@ -116,12 +125,30 @@ void menu_00_principale() // Inizio funzione per richiamo menù principale
                 puls_sx = false;
         }
 
+        puls_dx = digitalRead(PIN_DX); // debounce software pulsante DX
+        if (puls_dx)                   // debounce software pulsante DX
+        {
+            if ((vga.millis() - t_dx) > DEBOUNCE_PULS)
+            {
+                puls_dx = true;
+                t_dx = vga.millis();
+                indiceSetcolori++;
+                if (indiceSetcolori > 4)
+                    indiceSetcolori = 0;
+                impostaColori(indiceSetcolori); // avanzo set colori
+                break;
+            }
+            else
+                puls_sx = false;
+        }
     } while (!(puls_ok || puls_sx));
+    digitalWrite(PIN_LED_VERDE, LOW);
 } // Fine funzione per richiamo menù principale
 
 void menu_11_selezione() // Inizio funzione per selezione menù di gioco
 {
     vga.delay(RITARDO_SCHERMATA);
+    digitalWrite(PIN_LED_VERDE, HIGH);
     unsigned long int t_ok = 0;
     unsigned long int t_sx = 0;
     unsigned long int t_dx = 0;
@@ -194,11 +221,13 @@ void menu_11_selezione() // Inizio funzione per selezione menù di gioco
                 break;          // passo al menù principale
             }
     } while (1);
+    digitalWrite(PIN_LED_VERDE, LOW);
 } // Fine funzione per selezione menù di gioco
 
 void menu_12_copyright() // Inizio funzione per display info copyright
 {
     vga.delay(RITARDO_SCHERMATA);
+    digitalWrite(PIN_LED_VERDE, HIGH);
     rigaStringa = 0;
     vga.clear(NERO);
     disegnaBordi(ROSSO);
@@ -210,11 +239,13 @@ void menu_12_copyright() // Inizio funzione per display info copyright
     {
     } while (digitalRead(PIN_SX) == 0);
     statoMenu = 00; // torno al menù principale
+    digitalWrite(PIN_LED_VERDE, LOW);
 } // Fine funzione per display info copyright
 
 void menu_21_inizio_spaceinvaders()
 {
     vga.delay(RITARDO_SCHERMATA);
+    digitalWrite(PIN_LED_VERDE, HIGH);
     unsigned long int t_ok = 0;
     unsigned long int t_sx = 0;
     rigaStringa = 0;
@@ -240,11 +271,13 @@ void menu_21_inizio_spaceinvaders()
                 break;          // uscita dal ciclo while
             }
     } while (1);
+    digitalWrite(PIN_LED_VERDE, LOW);
 }
 
 void menu_22_inizio_pong()
 {
     vga.delay(RITARDO_SCHERMATA);
+    digitalWrite(PIN_LED_VERDE, HIGH);
     unsigned long int t_ok = 0;
     unsigned long int t_sx = 0;
     rigaStringa = 0;
@@ -270,11 +303,13 @@ void menu_22_inizio_pong()
                 break;          // uscita dal ciclo while
             }
     } while (1);
+    digitalWrite(PIN_LED_VERDE, LOW);
 }
 
 void menu_23_inizio_snake()
 {
     vga.delay(RITARDO_SCHERMATA);
+    digitalWrite(PIN_LED_VERDE, HIGH);
     unsigned long int t_ok = 0;
     unsigned long int t_sx = 0;
     rigaStringa = 0;
@@ -300,6 +335,7 @@ void menu_23_inizio_snake()
                 break;          // uscita dal ciclo while
             }
     } while (1);
+    digitalWrite(PIN_LED_VERDE, LOW);
 }
 
 void loop() // Inizio loop principale
